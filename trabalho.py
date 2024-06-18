@@ -1,4 +1,5 @@
-# Inicialização dos recursos
+import os
+
 CPU = [None] * 4  # Inicializa 4 CPUs como None
 disco = [None] * 4  # Inicializa 4 discos como None
 tam = 64  # Define o tamanho da memória em unidades
@@ -145,6 +146,38 @@ def novo_pronto(processo: list, tempo: int, filapronto: list, disco: list, MP: l
 
     return proxMP
 
+def clear_terminal():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def tela():
+    clear_terminal()
+    print("================================")
+    print("Unidade de tempo atual:", contador)
+    print("================================")
+    print("Estado Atual das CPUs:")
+    for i in range(4):
+        if CPU[i] is not None and (CPU[i][1] + CPU[i][2] + CPU[i][3] >= 0):
+            restante = CPU[i][1] + CPU[i][2] + CPU[i][3]
+            print(f"  CPU {i}: Executando processo {CPU[i][6]} (Tempo restante: {restante})")
+        else:
+            CPU[i] = None
+            print(f"  CPU {i}: Ociosa")
+    print("================================")
+    print("Fila de Prontos:")
+    for idx, fila in enumerate(userprocess_queue, start=1):
+        fila_processos = ", ".join(f"{processo[6]} (Restante: {processo[1] + processo[2] + processo[3]})" for processo in fila)
+        print(f"  Fila {idx}: {fila_processos}")
+    print("================================")
+    print("Processos em I/O:")
+    if block_queue:
+        for processo in block_queue:
+            print(f"  Processo {processo[6]} em I/O (Tempo restante: {processo[2]})")
+    else:
+        print("  Nenhum processo em I/O")
+    print("================================")
+
+    print("\nEventos:")
+
 # Leitura do arquivo de entrada no novo formato
 with open("processos.txt") as arq:  # abre o arquivo de entrada
     for linha in arq:
@@ -161,6 +194,8 @@ for i in processlist:
 var_usuario = int(input("Digite a unidade de tempo: "))  # Solicita ao usuário a quantidade de unidades de tempo a executar
 cont = 0
 while var_usuario != -1:
+    tela()
+
     cont += 1
     if cont == 2:
         proxMP = novo_pronto(processlist, contador, userprocess_queue1, disco, MP, proxMP, tam) 
@@ -176,16 +211,10 @@ while var_usuario != -1:
             elif len(userprocess_queue4) > 0:
                 proxMP = novo_pronto(processlist, contador, userprocess_queue4, disco, MP, proxMP, tam)  # Atualiza a fila de prontos do usuário 
 
-
     p = [None] * 4
     exec_io(block_queue, userprocess_queue)  # Executa I/O nos processos bloqueados
     for i in range(4):
         exec_CPU(userprocess_queue, processos_executando, i, disco, 3, p, block_queue, MP)  # Executa os processos nas CPUs
-
-    print(f"FILA 1: {userprocess_queue1}")
-    print(f"FILA 2: {userprocess_queue2}")
-    print(f"FILA 3: {userprocess_queue3}")
-    print(f"FILA 4: {userprocess_queue4}")
 
     # Verifica se algum processo foi escalonado
     if all(cpu is None for cpu in CPU) and not any(userprocess_queue) and not processlist:
@@ -195,21 +224,6 @@ while var_usuario != -1:
             break
     else:
         idle_count = 0
-
-    # Exibir estado atual das CPUs e a fila de prontos
-    for i in range(4):
-        if CPU[i] is not None and (CPU[i][1] + CPU[i][2] + CPU[i][3] >= 0):
-            print(f"CPU {i}: {CPU[i][6]} (Tempo restante: {CPU[i][1] + CPU[i][2] + CPU[i][3]})")
-        else:
-            CPU[i] = None
-            print(f"CPU {i}: {CPU[i]}")
-    
-    print("Fila de Prontos: ", end="")
-    for fila in userprocess_queue:
-        for processo in fila:
-            print(f"{processo[6]} (Tempo restante: {processo[1] + processo[2] + processo[3]}), ", end="")
-    print("\nUnidade de tempo - ", contador)
-    #print((MP)) --> PRINT PARA DEBUGGAR OS REGISTROS NA MEMÓRIA PRINCIPAL
     print("================================")
     
     var_usuario -= 1 
